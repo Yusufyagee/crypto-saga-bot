@@ -3,6 +3,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from datetime import time
 import requests
 import os
+import feedparser
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL = "@cryptosaga0"
@@ -15,7 +16,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# 📊 Market Update
 async def market(context: ContextTypes.DEFAULT_TYPE):
+
     url = (
         "https://api.coingecko.com/api/v3/simple/price?"
         "ids=bitcoin,ethereum,binancecoin,tron,solana,avalanche-2,"
@@ -45,7 +48,7 @@ async def market(context: ContextTypes.DEFAULT_TYPE):
             ("🟢 NEAR", "near")
         ]
 
-        message = "📊 *CRYPTO SAGA MARKET UPDATE*\n\n"
+        message = "📊 *CRYPTO SAGA MARKET UPDATE* 🚀\n\n"
 
         for label, key in coins:
             price = data[key]["usd"]
@@ -71,29 +74,68 @@ async def market(context: ContextTypes.DEFAULT_TYPE):
         )
 
     except Exception as e:
-        print("Error:", e)
+        print("Market Error:", e)
+
+
+# 📰 Crypto News Update
+async def crypto_news(context: ContextTypes.DEFAULT_TYPE):
+
+    try:
+        news = feedparser.parse(
+            "https://cointelegraph.com/rss"
+        )
+
+        message = "📰 *CRYPTO SAGA NEWS UPDATE* 🚀\n\n"
+
+        for item in news.entries[:5]:
+            message += f"🔹 {item.title}\n\n"
+
+        message += (
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🚀 @cryptosaga0\n"
+            "Learn • Earn • Grow"
+        )
+
+        await context.bot.send_message(
+            chat_id=CHANNEL,
+            text=message,
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        print("News Error:", e)
 
 
 def main():
+
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
 
-    # Crypto Saga 3 Daily Posts
+
+    # 📊 Market posts
     app.job_queue.run_daily(
         market,
-        time=time(hour=8, minute=0)   # Morning
+        time=time(hour=8, minute=0)
     )
 
     app.job_queue.run_daily(
         market,
-        time=time(hour=14, minute=0)  # Afternoon
+        time=time(hour=14, minute=0)
     )
 
     app.job_queue.run_daily(
         market,
-        time=time(hour=20, minute=0)  # Evening
+        time=time(hour=20, minute=0)
     )
+
+
+    # 📰 News post
+    app.job_queue.run_daily(
+        crypto_news,
+        time=time(hour=12, minute=0)
+    )
+
 
     print("🚀 Crypto Saga Bot is running...")
     app.run_polling()
