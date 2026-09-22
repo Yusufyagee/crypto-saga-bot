@@ -77,7 +77,8 @@ async def market(context: ContextTypes.DEFAULT_TYPE):
         print("Market Error:", e)
 
 
-# 📰 Crypto News Update
+
+# 📰 Crypto News
 async def crypto_news(context: ContextTypes.DEFAULT_TYPE):
 
     try:
@@ -106,6 +107,54 @@ async def crypto_news(context: ContextTypes.DEFAULT_TYPE):
         print("News Error:", e)
 
 
+
+# 🎁 Airdrop & Testnet Alerts
+async def airdrop_alerts(context: ContextTypes.DEFAULT_TYPE):
+
+    try:
+        feed = feedparser.parse(
+            "https://coinmarketcap.com/community/rss/latest/"
+        )
+
+        message = "🎁 *CRYPTO SAGA AIRDROP & TESTNET ALERTS* 🚀\n\n"
+
+        found = 0
+
+        for item in feed.entries:
+
+            title = item.title.lower()
+
+            if (
+                "airdrop" in title
+                or "testnet" in title
+                or "mainnet" in title
+            ):
+                message += f"🔹 {item.title}\n\n"
+                found += 1
+
+            if found == 5:
+                break
+
+        if found == 0:
+            message += "No major alerts found today 🔍"
+
+        message += (
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🚀 @cryptosaga0\n"
+            "Learn • Earn • Grow"
+        )
+
+        await context.bot.send_message(
+            chat_id=CHANNEL,
+            text=message,
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        print("Airdrop Error:", e)
+
+
+
 def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
@@ -113,7 +162,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
 
 
-    # 📊 Market posts
+    # 📊 Market Updates
     app.job_queue.run_daily(
         market,
         time=time(hour=8, minute=0)
@@ -130,15 +179,23 @@ def main():
     )
 
 
-    # 📰 News post
+    # 📰 News
     app.job_queue.run_daily(
         crypto_news,
         time=time(hour=12, minute=0)
     )
 
 
+    # 🎁 Airdrops/Testnets
+    app.job_queue.run_daily(
+        airdrop_alerts,
+        time=time(hour=16, minute=0)
+    )
+
+
     print("🚀 Crypto Saga Bot is running...")
     app.run_polling()
+
 
 
 if __name__ == "__main__":
