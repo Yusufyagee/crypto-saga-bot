@@ -1,5 +1,6 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from datetime import time
 import requests
 import os
 
@@ -24,49 +25,53 @@ async def market(context: ContextTypes.DEFAULT_TYPE):
         "&include_24hr_change=true"
     )
 
-    data = requests.get(url, timeout=10).json()
+    try:
+        data = requests.get(url, timeout=10).json()
 
-    coins = [
-        ("🟠 BTC", "bitcoin"),
-        ("🔵 ETH", "ethereum"),
-        ("🟡 BNB", "binancecoin"),
-        ("🔴 TRX", "tron"),
-        ("🟣 SOL", "solana"),
-        ("🔺 AVAX", "avalanche-2"),
-        ("⚫ SUI", "sui"),
-        ("🔵 TON", "the-open-network"),
-        ("🔷 XRP", "ripple"),
-        ("🟢 ADA", "cardano"),
-        ("🐶 DOGE", "dogecoin"),
-        ("🔗 LINK", "chainlink"),
-        ("🟡 APT", "aptos"),
-        ("🟢 NEAR", "near")
-    ]
+        coins = [
+            ("🟠 BTC", "bitcoin"),
+            ("🔵 ETH", "ethereum"),
+            ("🟡 BNB", "binancecoin"),
+            ("🔴 TRX", "tron"),
+            ("🟣 SOL", "solana"),
+            ("🔺 AVAX", "avalanche-2"),
+            ("⚫ SUI", "sui"),
+            ("🔵 TON", "the-open-network"),
+            ("🔷 XRP", "ripple"),
+            ("🟢 ADA", "cardano"),
+            ("🐶 DOGE", "dogecoin"),
+            ("🔗 LINK", "chainlink"),
+            ("🟡 APT", "aptos"),
+            ("🟢 NEAR", "near")
+        ]
 
-    message = "📊 *CRYPTO SAGA MARKET UPDATE*\n\n"
+        message = "📊 *CRYPTO SAGA MARKET UPDATE*\n\n"
 
-    for label, key in coins:
-        price = data[key]["usd"]
-        change = data[key]["usd_24h_change"]
+        for label, key in coins:
+            price = data[key]["usd"]
+            change = data[key]["usd_24h_change"]
 
-        arrow = "🟢 ▲" if change >= 0 else "🔴 ▼"
+            arrow = "🟢 ▲" if change >= 0 else "🔴 ▼"
+
+            message += (
+                f"{label}: ${price:,.2f}\n"
+                f"{arrow} {change:.2f}% (24h)\n\n"
+            )
 
         message += (
-            f"{label}: ${price:,.2f}\n"
-            f"{arrow} {change:.2f}% (24h)\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🚀 @cryptosaga0\n"
+            "Learn • Earn • Grow"
         )
 
-    message += (
-        "━━━━━━━━━━━━━━━━━━\n"
-        "🚀 @cryptosaga0\n"
-        "Learn • Earn • Grow"
-    )
+        await context.bot.send_message(
+            chat_id=CHANNEL,
+            text=message,
+            parse_mode="Markdown"
+        )
 
-    await context.bot.send_message(
-        chat_id=CHANNEL,
-        text=message,
-        parse_mode="Markdown"
-    )
+    except Exception as e:
+        print("Error:", e)
 
 
 def main():
@@ -74,11 +79,20 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
 
-    # Automatic market update every hour
-    app.job_queue.run_repeating(
+    # Crypto Saga 3 Daily Posts
+    app.job_queue.run_daily(
         market,
-        interval=3600,
-        first=10
+        time=time(hour=8, minute=0)   # Morning
+    )
+
+    app.job_queue.run_daily(
+        market,
+        time=time(hour=14, minute=0)  # Afternoon
+    )
+
+    app.job_queue.run_daily(
+        market,
+        time=time(hour=20, minute=0)  # Evening
     )
 
     print("🚀 Crypto Saga Bot is running...")
