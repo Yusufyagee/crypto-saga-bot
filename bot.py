@@ -1,3 +1,4 @@
+
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import requests
@@ -6,50 +7,44 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL = "@cryptosaga0"
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🚀 Welcome to Crypto Saga Bot!\n\n"
-        "Your source for crypto news, market updates, and airdrops."
+        "Your source for crypto news, market updates and airdrops."
     )
 
-
-async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    url = "https://api.coingecko.com/api/v3/search/trending"
-
-    try:
-        data = requests.get(url).json()
-
-        message = "🔥 Trending Coins\n\n"
-
-        for i, coin in enumerate(data["coins"], start=1):
-            item = coin["item"]
-            message += f"{i}. {item['name']} ({item['symbol']})\n"
-
-        message += "\n🚀 Powered by Crypto Saga"
-
-        await update.message.reply_text(message)
-
-    except Exception:
-        await update.message.reply_text(
-            "❌ Unable to fetch trending coins right now."
-        )
-
-
 async def market(context: ContextTypes.DEFAULT_TYPE):
-    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+    url = (
+        "https://api.coingecko.com/api/v3/simple/price?"
+        "ids=bitcoin,ethereum,binancecoin,tron,solana,avalanche-2,"
+        "sui,the-open-network,ripple,cardano,dogecoin,chainlink,"
+        "aptos,near&vs_currencies=usd"
+    )
 
     data = requests.get(url).json()
 
-    btc = data["bitcoin"]["usd"]
-    eth = data["ethereum"]["usd"]
+    text = f"""
+📊 *CRYPTO SAGA MARKET UPDATE*
 
-    text = (
-        "📊 *Crypto Market Update*\n\n"
-        f"🟠 Bitcoin: ${btc:,}\n"
-        f"🔵 Ethereum: ${eth:,}\n\n"
-        "🚀 Powered by Crypto Saga"
-    )
+🟠 BTC : ${data['bitcoin']['usd']:,}
+🔵 ETH : ${data['ethereum']['usd']:,}
+🟡 BNB : ${data['binancecoin']['usd']:,}
+🔴 TRX : ${data['tron']['usd']:,}
+🟣 SOL : ${data['solana']['usd']:,}
+🔺 AVAX : ${data['avalanche-2']['usd']:,}
+⚫ SUI : ${data['sui']['usd']:,}
+🔵 TON : ${data['the-open-network']['usd']:,}
+🔷 XRP : ${data['ripple']['usd']:,}
+🟢 ADA : ${data['cardano']['usd']:,}
+🐶 DOGE : ${data['dogecoin']['usd']:,}
+🔗 LINK : ${data['chainlink']['usd']:,}
+🟡 APT : ${data['aptos']['usd']:,}
+🟢 NEAR : ${data['near']['usd']:,}
+
+━━━━━━━━━━━━━━━━━━
+🚀 @cryptosaga0
+Learn • Earn • Grow
+"""
 
     await context.bot.send_message(
         chat_id=CHANNEL,
@@ -57,13 +52,12 @@ async def market(context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("trending", trending))
 
+    # Post every hour
     app.job_queue.run_repeating(
         market,
         interval=3600,
@@ -72,7 +66,6 @@ def main():
 
     print("Crypto Saga Bot is running...")
     app.run_polling()
-
 
 if __name__ == "__main__":
     main()
